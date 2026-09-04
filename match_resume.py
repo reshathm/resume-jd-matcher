@@ -9,10 +9,20 @@ Usage:
     python match_resume.py resume.txt jd.txt
 """
 
+import re
 import sys
 import argparse
 from sklearn.feature_extraction.text import TfidfVectorizer
 from sklearn.metrics.pairwise import cosine_similarity
+
+# Section headers a typical ATS parser looks for to structure a resume.
+EXPECTED_SECTIONS = [
+    "summary", "experience", "education", "skills",
+    "projects", "certifications", "achievements",
+]
+
+EMAIL_PATTERN = re.compile(r"[\w.+-]+@[\w-]+\.[\w.-]+")
+PHONE_PATTERN = re.compile(r"(\+?\d{1,3}[\s-]?)?\d{10}")
 
 
 def read_file(path: str) -> str:
@@ -73,6 +83,88 @@ def missing_keywords(vectorizer, tfidf_matrix, top_n: int = 15):
     return [word for word, _ in candidates[:top_n]]
 
 
+def check_docx_structure(docx_path):
+    """
+    Inspect a .docx file for elements that commonly break ATS parsers:
+    tables (content inside cells is often skipped or scrambled) and
+    inline images (ATS can't read text embedded in graphics at all).
+
+    Returns a list of (issue, detail) warning tuples. Empty list = clean.
+    """
+    try:
+        from docx import Document
+    except ImportError:
+        return [("skipped", "python-docx not installed; run: pip install python-docx")]
+
+    warnings = []
+    try:
+        doc = Document(docx_path)
+    except Exception as e:
+        return [("error", f"could not open docx: {e}")]
+
+    if doc.tables:
+        warnings.append((
+            "tables",
+            f"{len(doc.tables)} table(s) found — text inside tables is "
+            "frequently skipped or reordered by ATS parsers, even though "
+            "it displays fine visually.",
+        ))
+
+    if doc.inline_shapes:
+        warnings.append((
+            "images",
+            f"{len(doc.inline_shapes)} image(s)/graphic(s) found — ATS "
+            "cannot read any text embedded inside an image at all.",
+        ))
+
+    return warnings
+
+
+def check_ats_compatibility(resume_text: str):
+    """
+    Content-level ATS checks that don't require the original .docx file:
+    contact info extractability and presence of standard section headers.
+
+    Returns a list of (check_name, passed, detail) tuples.
+    """
+    results = []
+
+    email_found = bool(EMAIL_PATTERN.search(resume_text))
+    results.append((
+        "Email detectable",
+        email_found,
+        "Found" if email_found else "No email pattern found in plain text",
+    ))
+
+    phone_found = bool(PHONE_PATTERN.search(resume_text))
+    results.append((
+        "Phone number detectable",
+        phone_found,
+        "Found" if phone_found else "No phone pattern found in plain text",
+    ))
+
+    text_lower = resume_text.lower()
+    missing_sections = [
+        s for s in EXPECTED_SECTIONS
+        if s not in text_lower and not any(
+            alt in text_lower for alt in {
+                "summary": ["objective"],
+                "experience": ["projects", "work history"],
+            }.get(s, [])
+        )
+    ]
+    # Only flag it as a real gap if BOTH a section and its common alias are missing
+    section_ok = len(missing_sections) <= 2  # allow a couple of naming variations
+    results.append((
+        "Standard section headers",
+        section_ok,
+        "Covers expected sections" if section_ok
+        else f"Missing/non-standard: {', '.join(missing_sections)}",
+    ))
+
+    return results
+
+
 def main():
     parser = argparse.ArgumentParser(
         description="Score resume-to-job-description match using TF-IDF + cosine similarity."
@@ -82,6 +174,9 @@ def main():
     parser.add_argument(
         "--top", type=int, default=15, help="Number of missing keywords to show"
     )
+    parser.add_argument(
+        "--docx", help="Optional path to the original .docx file for structural ATS checks"
+    )
     args = parser.parse_args()
 
     resume_text = read_file(args.resume)
@@ -90,6 +185,22 @@ def main():
     score, vectorizer, tfidf_matrix = compute_match_score(resume_text, jd_text)
     missing = missing_keywords(vectorizer, tfidf_matrix, args.top)
 
+    print("=" * 50)
+    print("ATS COMPATIBILITY CHECK")
+    print("=" * 50)
+    for name, passed, detail in check_ats_compatibility(resume_text):
+        status = "PASS" if passed else "WARN"
+        print(f"[{status}] {name}: {detail}")
+
+    if args.docx:
+        structural_warnings = check_docx_structure(args.docx)
+        if structural_warnings:
+            for issue, detail in structural_warnings:
+                print(f"[WARN] Structure ({issue}): {detail}")
+        else:
+            print("[PASS] Document structure: no tables or images detected")
+
+    print()
     print("=" * 50)
     print(f"Match Score: {score}%")
     print("=" * 50)

@@ -1,0 +1,25 @@
+Reshath M
+Cybersecurity Engineer | Python Developer | Security Tooling
+Chennai, Tamil Nadu, India | +91 8056033833 | reshathm108@gmail.com
+
+PROFESSIONAL SUMMARY
+B.Tech Computer Science (Cybersecurity) student with hands-on experience building
+Python-based security tooling. Proficient in Python and C++, comfortable working
+end-to-end in a Linux/Ubuntu (WSL) environment, with a working foundation in AWS
+cloud services and Generative AI application workflows.
+
+TECHNICAL SKILLS
+Languages: Python, C++
+Environment & Tools: Linux/Ubuntu (WSL), Git, GitHub, VS Code, CLI tooling
+Cloud & DevOps: AWS fundamentals, CI/CD basics
+Security: Secret/credential detection, secure coding awareness
+
+PROJECTS
+Git Secret Scanner - Python CLI Tool
+Built a command-line tool that scans a codebase and its full Git commit history to
+detect accidentally committed secrets using regex pattern matching and Shannon
+entropy analysis. Includes a unit test suite, CI integration, and allowlist system.
+
+EDUCATION
+SRM Institute of Science and Technology
+B.Tech, Computer Science and Engineering (Cybersecurity), 2024-2028, CGPA 8.4/10

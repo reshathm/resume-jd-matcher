@@ -1,0 +1,19 @@
+AI Developer Intern
+
+We are seeking a motivated AI Developer Intern to join our engineering team.
+
+Responsibilities:
+Assist in developing and testing machine learning models using Python and libraries
+such as scikit-learn, TensorFlow, or PyTorch. Work with data preprocessing, feature
+engineering, and model evaluation. Collaborate with senior engineers on NLP tasks such
+as text classification, embeddings, and similarity scoring. Contribute to building and
+maintaining REST APIs for model deployment. Deploy and monitor models on cloud
+platforms such as AWS or GCP.
+
+Requirements:
+Currently pursuing a degree in Computer Science, AI, Data Science, or related field.
+Strong programming fundamentals in Python. Basic understanding of machine learning
+concepts such as supervised learning, model training, and evaluation metrics.
+Familiarity with version control using Git and GitHub. Exposure to cloud platforms
+like AWS is a plus. Prior project experience, hackathon participation, or personal
+GitHub projects are a strong plus.
